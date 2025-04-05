@@ -2,9 +2,9 @@ import streamlit as st
 import asyncio
 from dotenv import load_dotenv
 import os
-from agents.prompt_analysis_agent import PromptAnalysisAgent
-from agents.module_suggestion_agent import ModuleSuggestionAgent
-from agents.dynamic_question_agent import DynamicQuestionAgent
+from agents.prompt import PromptAnalysisAgent
+from agents.module import ModuleSuggestionAgent
+from agents.question import DynamicQuestionAgent
 
 # Load environment variables
 load_dotenv()

@@ -1,55 +1,11 @@
-from typing import Dict, List, Optional
+from typing import Dict
 import json
-from autogen_agentchat.agents import AssistantAgent
-from autogen_ext.models.openai import OpenAIChatCompletionClient
-from openai import OpenAI
+from ..base.base_agent import BaseAgent
+from ..utils.json_utils import extract_json_from_text, create_error_response
+from .module_config import MODULES
 
-class ModuleSuggestionAgent(AssistantAgent):
+class ModuleSuggestionAgent(BaseAgent):
     """Agent responsible for determining which modules should be active and generating appropriate suggestions."""
-    
-    # Define standard modules and their question templates
-    MODULES = {
-        "character": {
-            "name": "Character Module",
-            "questions": [
-                "What is the character's appearance?",
-                "What is the character's emotional state?",
-                "What is the character's pose or position?",
-                "What is the character wearing?",
-                "What accessories or items does the character have?"
-            ]
-        },
-        "setting": {
-            "name": "Setting Module",
-            "questions": [
-                "What season or time period is it?",
-                "What are the weather conditions?",
-                "What specific details about the environment should be emphasized?",
-                "What is the lighting like?",
-                "What is the overall color palette?"
-            ]
-        },
-        "atmosphere": {
-            "name": "Atmosphere Module",
-            "questions": [
-                "What mood should the scene convey?",
-                "What emotional response should it evoke?",
-                "What artistic style should be used?",
-                "Should there be any special effects or atmospheric elements?",
-                "What is the desired level of realism vs. stylization?"
-            ]
-        },
-        "action": {
-            "name": "Action Module",
-            "questions": [
-                "What specific action is taking place?",
-                "What is the intensity of the action?",
-                "What is the direction or flow of movement?",
-                "Are there any secondary actions or movements?",
-                "How should the action be captured (e.g., motion blur, freeze frame)?"
-            ]
-        }
-    }
     
     def __init__(self, name: str = "module_suggester", model_client=None, **kwargs):
         self._suggestion_system_message = """You are a specialized agent for selecting relevant modules 
@@ -66,11 +22,6 @@ class ModuleSuggestionAgent(AssistantAgent):
         For each module, determine if it should be active based on the prompt analysis,
         and generate relevant questions and suggestions for improvement."""
         
-        if model_client is None:
-            model_client = OpenAIChatCompletionClient(
-                model="gpt-4o-mini"
-            )
-            
         super().__init__(
             name=name,
             system_message=self._suggestion_system_message,
@@ -78,8 +29,8 @@ class ModuleSuggestionAgent(AssistantAgent):
             **kwargs
         )
         
-        # Create OpenAI client for direct API calls
-        self.client = OpenAI()
+        # Store module configurations
+        self.modules = MODULES
         
     def determine_active_modules(self, analysis_result: Dict) -> Dict:
         """
@@ -164,23 +115,19 @@ Format the response as a JSON object."""
         )
         
         try:
-            # Extract the JSON from the response
             suggestion_text = response.choices[0].message.content
-            json_start = suggestion_text.find('{')
-            json_end = suggestion_text.rfind('}') + 1
-            if json_start >= 0 and json_end > json_start:
-                suggestions = json.loads(suggestion_text[json_start:json_end])
-            else:
-                suggestions = {
-                    "error": "Could not parse JSON from response",
-                    "raw_response": suggestion_text
-                }
-            return suggestions
+            suggestions = extract_json_from_text(suggestion_text)
+            if suggestions:
+                return suggestions
+            return create_error_response(
+                "Could not parse JSON from response",
+                suggestion_text
+            )
         except Exception as e:
-            return {
-                "error": f"Error parsing suggestions: {str(e)}",
-                "raw_response": response.choices[0].message.content
-            }
+            return create_error_response(
+                f"Error parsing suggestions: {str(e)}",
+                response.choices[0].message.content
+            )
     
     async def process_prompt_analysis(self, analysis_result: Dict) -> Dict:
         """
@@ -203,7 +150,7 @@ Format the response as a JSON object."""
             "active_modules": active_modules,
             "suggestions": suggestions,
             "standard_questions": {
-                module: self.MODULES[module]["questions"]
+                module: self.modules[module]["questions"]
                 for module, status in active_modules.items()
                 if status["active"]
             }
