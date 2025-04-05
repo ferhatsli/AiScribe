@@ -195,6 +195,9 @@ class DynamicQuestionAgent(AssistantAgent):
         Returns:
             Dict containing the next question, options, and examples
         """
+        # Get the initial prompt if provided
+        initial_prompt = previous_response.get("initial_prompt") if previous_response else None
+        
         # Analyze the previous response if provided
         response_analysis = None
         intended_module = None
@@ -207,34 +210,44 @@ class DynamicQuestionAgent(AssistantAgent):
             response_analysis = self.analyze_response_content(previous_response["response"])
             # Determine the most relevant module from the response
             if isinstance(response_analysis, dict):
-                # Find the module with highest relevance score
-                actual_module = max(response_analysis.items(), key=lambda x: float(x[1]))[0] if response_analysis else None
+                # Find the module with highest relevance score, ensuring we handle nested dictionaries
+                relevance_scores = {}
+                for module, value in response_analysis.items():
+                    if isinstance(value, dict):
+                        # If it's a nested structure, calculate average of values
+                        relevance_scores[module] = sum(float(v) for v in value.values()) / len(value)
+                    else:
+                        # If it's a direct score
+                        relevance_scores[module] = float(value)
+                actual_module = max(relevance_scores.items(), key=lambda x: x[1])[0] if relevance_scores else None
         
         context = {
             "session": self.current_session,
             "previous_response": previous_response,
             "response_analysis": response_analysis,
             "intended_module": intended_module,
-            "actual_module": actual_module
+            "actual_module": actual_module,
+            "initial_prompt": initial_prompt  # Include initial prompt in context
         }
         
-        prompt = f"""Based on the current context, generate the next appropriate question:
+        prompt = f"""Based on the current context and keeping in mind the initial prompt: "{initial_prompt}", generate the next appropriate question.
 
 Context: {json.dumps(context, indent=2)}
 
 Special considerations:
-1. If the previous response contained information for a different module than intended,
+1. Ensure the question maintains relevance to the initial prompt theme
+2. If the previous response contained information for a different module than intended,
    consider whether to:
    a) Ask a follow-up question about the provided information
    b) Gently redirect back to the intended module
    c) Adapt the question flow to the user's natural direction
 
-2. Ensure the question builds upon all previously provided information,
+3. Ensure the question builds upon all previously provided information,
    even if it was given in response to questions about different modules.
 
 Generate a question that:
 1. Follows naturally from previous responses
-2. Is relevant to active modules
+2. Is relevant to active modules and initial prompt theme
 3. Includes helpful examples and options
 4. Adapts to the user's level of detail
 
@@ -242,7 +255,7 @@ Format the response as a JSON object with:
 - id: A unique identifier for the question
 - module: The module this question belongs to
 - question: The actual question text
-- options: List of possible answers
+- options: List of possible answers (keep these focused on the initial prompt theme)
 - examples: List of example responses
 - adaptation_reason: Explanation of why this question was chosen"""
 
@@ -348,4 +361,77 @@ Format the response as a JSON object with:
             "initial_question": initial_question,
             "active_modules": self.current_session["active_modules"],
             "progress": self.get_session_progress()
-        } 
+        }
+
+    async def generate_final_prompt(self) -> str:
+        """
+        Generates a final, cohesive prompt from all collected responses in a natural, flowing style.
+        
+        Returns:
+            str: A well-structured prompt combining all elements
+        """
+        # Collect all responses and categorize them
+        prompt_elements = {
+            "character": [],
+            "setting": [],
+            "action": [],
+            "atmosphere": [],
+            "style": ["cinematic composition", "professional photography", "highly detailed", "masterful composition"]  # Default style elements
+        }
+        
+        # Process responses and categorize them
+        for qa in self.current_session["question_history"]:
+            module = qa["question"].get("module", "general")
+            response = qa["response"]
+            
+            # Clean and process the response
+            response = response.strip()
+            if response:
+                if module in prompt_elements:
+                    prompt_elements[module].append(response)
+                elif module == "general":
+                    # Analyze the response to determine the best category
+                    analysis = self.analyze_response_content(response)
+                    if isinstance(analysis, dict):
+                        # Find the most relevant category
+                        max_relevance = 0
+                        best_category = None
+                        for category, score in analysis.items():
+                            if isinstance(score, (int, float)) and score > max_relevance:
+                                max_relevance = score
+                                best_category = category
+                        if best_category and best_category in prompt_elements:
+                            prompt_elements[best_category].append(response)
+        
+        # Create the prompt generation request
+        generation_prompt = f"""Create a cohesive, natural-flowing prompt that combines these elements:
+
+Character details: {"; ".join(prompt_elements["character"]) if prompt_elements["character"] else "N/A"}
+Setting details: {"; ".join(prompt_elements["setting"]) if prompt_elements["setting"] else "N/A"}
+Action details: {"; ".join(prompt_elements["action"]) if prompt_elements["action"] else "N/A"}
+Atmosphere details: {"; ".join(prompt_elements["atmosphere"]) if prompt_elements["atmosphere"] else "N/A"}
+Style elements: {"; ".join(prompt_elements["style"])}
+
+Format it as a single, flowing description that reads naturally, similar to this example:
+"Little Red Riding Hood, in a detailed and realistic illustration, in the depths of the forest, under the dramatic sunlight filtering through the trees, walking with care and determination with her red cape; The dense, vibrant green vegetation surrounding her, elegant floral details and mystical atmosphere are professionally depicted with a cinematic composition and atmospheric lighting."
+
+Requirements:
+1. Start with the main subject/character and their key attributes
+2. Flow naturally into the setting and atmosphere
+3. Incorporate actions and movements
+4. End with technical/style specifications
+5. Use semicolons to separate major scene elements
+6. Maintain a natural, descriptive flow throughout
+7. Include all provided details while avoiding repetition
+8. Ensure the prompt reads as one cohesive description"""
+
+        # Generate the final prompt
+        response = self.client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a specialist in creating cohesive, natural-flowing image generation prompts that combine multiple elements into a single, compelling description."},
+                {"role": "user", "content": generation_prompt}
+            ]
+        )
+        
+        return response.choices[0].message.content.strip() 
