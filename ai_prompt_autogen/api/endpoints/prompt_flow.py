@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends, Request
 from typing import List, Dict, Optional, Any
 import json
 import re
@@ -15,6 +15,9 @@ from ...agents.auto_prompt_expander_agent import auto_prompt_expander
 
 # Use relative imports for schemas
 from ...schemas.prompt import PromptRequest, PromptResponse, QuestionItem, AnswerItem
+
+# Import dependencies for auth
+from ..dependencies import get_current_user, get_optional_user
 
 router = APIRouter()
 
@@ -58,7 +61,7 @@ def _call_agent(recipient: Any, message: str, silent: bool = True) -> Optional[s
         return None
 
 @router.post("/generate", response_model=PromptResponse, tags=["Prompt Generation"])
-async def generate_prompt_flow(request: PromptRequest) -> PromptResponse:
+async def generate_prompt_flow(request: PromptRequest, user=Depends(get_optional_user), req: Request = None) -> PromptResponse:
     """
     Processes a user prompt through a multi-agent workflow:
     1. (Optional) Expands the prompt.
@@ -67,7 +70,14 @@ async def generate_prompt_flow(request: PromptRequest) -> PromptResponse:
     4. Suggests active modules.
     5. If no answers provided: Generates clarifying questions.
     6. If answers provided: Generates a final, enhanced prompt.
+    
+    Authentication is optional - if user is authenticated, their preferences can be used.
     """
+    # Authenticated user'ı kontrol et
+    if user:
+        print(f"User authenticated: {user.get('email', 'unknown')}")
+        # İsteğe bağlı: kullanıcı tercihlerini ekleyebilirsiniz
+        
     current_prompt = request.prompt
     expansions_list: Optional[List[str]] = None
     final_prompt: Optional[str] = None

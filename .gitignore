@@ -44,4 +44,7 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
-*.swo 
+*.swo
+
+# Project specific
+Aiscribe-mobile/ 
