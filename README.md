@@ -1,121 +1,70 @@
-# AiScribe Projesi
+# ✍️ AiScribe – AI-Powered Visual Prompt Assistant
 
-## Genel Bakış
-AiScribe, yapay zeka destekli bir metin işleme ve analiz platformudur. Bu proje, kullanıcıların metin girişlerini işleyerek akıllı analizler ve öneriler sunan bir sistemdir. Proje, modern bir mobil uygulama ve güçlü bir backend altyapısından oluşmaktadır.
+AiScribe helps you turn short, simple ideas into detailed visual prompts using LLM agents. It analyzes, expands, and structures your input step-by-step for stunning image generation.
 
-## Teknik Mimari
+---
 
-### Backend (ai_prompt_autogen)
-Backend sistemi Python tabanlı olup, aşağıdaki ana bileşenlerden oluşmaktadır:
+## 🧠 How It Works
 
-#### Ana Bileşenler
-- **API Katmanı**: FastAPI framework'ü kullanılarak geliştirilmiş RESTful API
-- **Veri Modelleri**: Pydantic ile tanımlanmış veri şemaları
-- **AI Ajanları**: Özel geliştirilmiş yapay zeka ajanları
-- **Konfigürasyon Yönetimi**: Merkezi yapılandırma sistemi
+1. 💬 **You write a short idea** (e.g., “a cat riding a bicycle”)
+2. 🧩 **AiScribe analyzes** your input using multiple AI agents:
+   - PromptAnalyzerAgent
+   - AutoPromptExpanderAgent
+   - ModuleSuggesterAgent
+3. ✨ It generates a structured and highly descriptive prompt ready for image generation.
 
-#### Teknolojiler
-- Python 3.x
-- FastAPI
-- Pydantic
-- AutoGen (AI Framework)
-- SQLAlchemy (Veritabanı ORM)
+---
 
-### Mobil Uygulama (Aiscribe-mobile)
-iOS platformu için geliştirilmiş native mobil uygulama:
+## 📱 App Preview
 
-#### Özellikler
-- SwiftUI tabanlı modern kullanıcı arayüzü
-- MVVM (Model-View-ViewModel) mimari deseni
-- Asenkron veri işleme
-- Yerel veri depolama
-- Gerçek zamanlı veri senkronizasyonu
+| Home | Step-by-step Flow | Final Prompt |
+|------|-------------------|--------------|
+| <img src="screenshots/aiscribe_home.png" width="220"/> | <img src="screenshots/aiscribe_flow.png" width="220"/> | <img src="screenshots/aiscribe_result.png" width="220"/> |
 
-#### Teknolojiler
-- Swift
-- SwiftUI
-- Combine Framework
-- Core Data
+> Intuitive native iOS experience built with SwiftUI. AI flow is designed for non-technical users.
 
-## Kurulum ve Geliştirme
+---
 
-### Backend Kurulumu
-```bash
-# Sanal ortam oluşturma
-python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
-# veya
-.venv\Scripts\activate  # Windows
+## ✨ Features
 
-# Bağımlılıkları yükleme
-pip install -r requirements.txt
+- 🔍 AI-based prompt analysis (emotions, characters, context detection)
+- 🧠 Multi-agent architecture powered by **AutoGen Framework**
+- 🔄 Automatic prompt expansion with structured modules
+- 📤 Native integration with **DALL·E** via OpenAI API
+- 📝 Editable prompt sections and resuggestions
+- 📱 iOS-first interface with clean and fast SwiftUI components
 
-# Uygulamayı başlatma
-python run.py
-```
+---
 
-### Mobil Uygulama Kurulumu
-1. Xcode'u açın
-2. Aiscribe-mobile.xcodeproj dosyasını açın
-3. Gerekli bağımlılıkları yükleyin
-4. Projeyi derleyin ve çalıştırın
+## ⚙️ Technologies Used
 
-## API Dokümantasyonu
+- **Frontend:** Swift / SwiftUI  
+- **AI Framework:** AutoGen (multi-agent orchestration)  
+- **LLM Model:** OpenAI GPT  
+- **Image Generation:** DALL·E  
+- **Architecture:** Modular JSON flow, async API calls, section scoring
 
-### Temel Endpointler
-- `POST /api/prompt`: Yeni bir prompt işleme isteği
-- `GET /api/history`: Kullanıcı geçmişi
-- `POST /api/analyze`: Metin analizi
-- `GET /api/status`: Sistem durumu
+---
 
-## Veri Modelleri
+## 🚀 Example Prompt Flow
 
-### Prompt Modeli
-```python
-class Prompt(BaseModel):
-    id: UUID
-    content: str
-    created_at: datetime
-    status: str
-    result: Optional[Dict]
-```
+> **Input:** “a magical bird flying in space”  
+>  
+> **Output:**  
+> "A vibrant fantasy bird with glowing feathers soars through deep space, surrounded by colorful nebulas and stars. The scene has a dreamy and surreal mood. High detail, cinematic lighting."
 
-### Kullanıcı Modeli
-```python
-class User(BaseModel):
-    id: UUID
-    username: str
-    email: str
-    created_at: datetime
-```
+---
 
-## Güvenlik
-- JWT tabanlı kimlik doğrulama
-- HTTPS zorunluluğu
-- Rate limiting
-- Input validasyonu
-- Güvenli veri depolama
+## 📦 Getting Started
 
-## Performans
-- Asenkron işlem desteği
-- Önbellek mekanizması
-- Veritabanı optimizasyonu
-- Yük dengeleme
+This is a private iOS project currently in development.  
+For a technical walkthrough or testflight demo, feel free to get in touch.
 
-## Katkıda Bulunma
-1. Bu repository'yi fork edin
-2. Feature branch oluşturun (`git checkout -b feature/amazing-feature`)
-3. Değişikliklerinizi commit edin (`git commit -m 'Add some amazing feature'`)
-4. Branch'inizi push edin (`git push origin feature/amazing-feature`)
-5. Pull Request oluşturun
+---
 
-## Lisans
-Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için `LICENSE` dosyasına bakınız.
+## 📧 Contact
 
-## İletişim
-Proje Yöneticisi - [İletişim Bilgileri]
+[ferhatsli63@gmail.com](mailto:ferhatsli63@gmail.com)  
+[linkedin.com/in/ferhat-taşlı-674953218](https://linkedin.com/in/ferhat-ta%C5%9Fl%C4%B1-674953218)
 
-## Teşekkürler
-- Tüm katkıda bulunanlara
-- Açık kaynak topluluğuna
-- Proje destekçilerine
+---

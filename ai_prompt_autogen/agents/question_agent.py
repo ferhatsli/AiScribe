@@ -9,19 +9,23 @@ You will receive a JSON input containing:
 - categorized_elements: Items already mentioned in the prompt (e.g., "a smiling snowman", "a lively square").
 
 Your task:
-1. Generate 1 question per active module (e.g., character, setting).
-2. Generate all output in the language specified by `language_code` ("tr" for Turkish, "en" for English, fallback: English).
-3. Check if each module's information is already **sufficiently described** in `categorized_elements`.
+1. Generate 2-3 questions per active module (e.g., character, setting).
+2. For each module, focus on different aspects:
+   - Character: personality, appearance, emotions, background, motivations
+   - Setting: location details, atmosphere, time of day, weather, surroundings
+   - Atmosphere: mood, lighting, overall feel, ambiance, emotional tone
+   - Action: what they're doing, how they're doing it, why they're doing it, intensity
 
-To determine sufficiency:
-- If a character includes expressive adjectives (e.g., "smiling snowman", "serious robot"), consider it descriptive enough. Don't ask about personality.
-- If the setting includes emotional, visual, or physical cues (e.g., "lively square", "mysterious forest"), don't ask about atmosphere.
-- If weather or time details are already present (e.g., "snowy day", "breezy afternoon"), don't ask about ambiance.
-- If an action includes more than a verb (e.g., "joyfully dancing", "silently hiding"), don't ask again about what the character is doing.
+3. Even if some details are present in categorized_elements, still generate at least one question 
+   per active module to enhance and expand the description further.
 
-Only ask a question if:
-- The module is active **and**
-- The prompt is missing descriptive details for that module.
+4. Generate all output in the language specified by `language_code` ("tr" for Turkish, "en" for English, fallback: English).
+
+Guidelines for generating diverse questions:
+- Character questions should cover both physical and emotional aspects
+- Setting questions should address both physical details and atmosphere
+- Atmosphere questions should explore mood, lighting, and emotional impact
+- Action questions should cover both the physical action and its purpose
 
 Each question must include 2–3 examples, matching the detected language.
 
@@ -30,10 +34,15 @@ Respond ONLY with this JSON format:
   "questions": [
     {
       "module": "character",
-      "question": "Karakterin ruh hali veya kişiliği nasıl?",
-      "examples": ["Neşeli ve sosyal", "Dalgın ve düşünceli", "Sakin ve içedönük"]
+      "question": "Karakterin dış görünüşü nasıl?",
+      "examples": ["Uzun boylu ve atletik", "Kırışık yüzlü ve yaşlı", "Renkli kıyafetler içinde"]
+    },
+    {
+      "module": "character",
+      "question": "Karakterin ruh hali ve duyguları nasıl?",
+      "examples": ["Heyecanlı ve meraklı", "Endişeli ve tedirgin", "Mutlu ve umutlu"]
     }
-    // ... other relevant questions based on missing details
+    // ... other relevant questions based on active modules
   ]
 }
 """
