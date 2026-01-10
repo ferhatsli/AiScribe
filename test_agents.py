@@ -2,8 +2,8 @@ import asyncio
 import json
 import os
 from dotenv import load_dotenv
-from agents.prompt_analysis_agent import PromptAnalysisAgent
-from agents.module_suggestion_agent import ModuleSuggestionAgent
+from agents.prompt.prompt_analysis_agent import PromptAnalysisAgent
+from agents.module.module_suggestion_agent import ModuleSuggestionAgent
 
 async def test_agents():
     # Load environment variables
